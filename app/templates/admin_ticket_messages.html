@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Messages for Ticket {{ ticket.title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+        }
+        .messages-container {
+            max-height: 400px; /* Adjust the height as needed */
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding-right: 10px; /* Add padding to avoid scrollbar overlap */
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .message.admin {
+            background-color: #e7f3fe;
+            border-left: 5px solid #2196F3;
+        }
+        .message.user {
+            background-color: #e8f5e9;
+            border-left: 5px solid #4CAF50;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Messages for Ticket: {{ ticket.title }}</h1>
+
+        <!-- Scrollable container for messages -->
+        <div class="messages-container" id="messages-container">
+            {% for message in messages %}
+            <div class="message {% if message.sender_id == current_user.id %}admin{% else %}user{% endif %}">
+                <p><strong>{{ 'Admin' if message.sender_id == current_user.id else 'User' }}:</strong> {{ message.content }}</p>
+                <small>{{ message.local_timestamp.strftime('%Y-%m-%d %I:%M %p') }}</small>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Reply form -->
+        <form method="post" onsubmit="scrollToBottom()">
+            <textarea name="message" placeholder="Write your message..." required></textarea>
+            <button type="submit">Send Message</button>
+        </form>
+
+        <a href="{{ url_for('tickets.index') }}">Back to Dashboard</a>
+    </div>
+
+    <script>
+        function scrollToBottom() {
+            var container = document.getElementById('messages-container');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Scroll to bottom on page load
+        window.onload = scrollToBottom;
+    </script>
+</body>
+</html>

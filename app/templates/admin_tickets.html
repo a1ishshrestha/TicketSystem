@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin - Manage Tickets</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .status-select {
+            width: 100%;
+        }
+        .filter-form, .search-form {
+            margin: 10px 0;
+            display: inline-block;
+        }
+        .filter-form button, .search-form button {
+            margin-top: 8px;
+        }
+        .logout-link {
+            display: block;
+            margin-top: 20px;
+            text-align: right;
+        }
+        .notification {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .notification.read {
+            background-color: #e0e0e0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Dashboard - Manage Tickets</h1>
+        <p>Total Tickets: {{ tickets|length }}</p>
+
+        <!-- Notifications Section -->
+        <h2>Notifications</h2>
+        <div>
+            {% for notification in notifications %}
+            <div class="notification {% if notification.is_read %}read{% endif %}">
+                <p>{{ notification.message }}</p>
+                <small>{{ notification.timestamp.strftime('%Y-%m-%d %I:%M %p') }}</small>
+                {% if not notification.is_read %}
+                <form method="post" action="{{ url_for('tickets.mark_notification_read', notification_id=notification.id) }}">
+                    <button type="submit">Dismiss</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Ticket Filters -->
+        <form method="get" action="{{ url_for('tickets.index') }}" class="filter-form">
+            <label for="filter-status">Filter by Status:</label>
+            <select name="status" id="filter-status">
+                <option value="all" {% if request.args.get('status') == 'all' or not request.args.get('status') %}selected{% endif %}>All</option>
+                <option value="Open" {% if request.args.get('status') == 'Open' %}selected{% endif %}>Open</option>
+                <option value="In Progress" {% if request.args.get('status') == 'In Progress' %}selected{% endif %}>In Progress</option>
+                <option value="Resolved" {% if request.args.get('status') == 'Resolved' %}selected{% endif %}>Resolved</option>
+            </select>
+            <button type="submit">Apply Filter</button>
+        </form>
+
+        <!-- Search Form -->
+        <form method="get" action="{{ url_for('tickets.index') }}" class="search-form">
+            <label for="search-user">Search by User ID:</label>
+            <input type="text" id="search-user" name="user_id" placeholder="Enter User ID" value="{{ request.args.get('user_id', '') }}">
+            <button type="submit">Search</button>
+        </form>
+
+        <!-- Ticket Table -->
+        <form method="post" action="{{ url_for('tickets.update_tickets') }}">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Submitted By (Username & ID)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in tickets %}
+                    <tr>
+                        <td>{{ ticket.title }}</td>
+                        <td>{{ ticket.description }}</td>
+                        <td>
+                            <select name="status_{{ ticket.id }}" class="status-select">
+                                <option value="Open" {% if ticket.status == "Open" %}selected{% endif %}>Open</option>
+                                <option value="In Progress" {% if ticket.status == "In Progress" %}selected{% endif %}>In Progress</option>
+                                <option value="Resolved" {% if ticket.status == "Resolved" %}selected{% endif %}>Resolved</option>
+                            </select>
+                        </td>
+                        <td>{{ ticket.user.username }} (ID: {{ ticket.user_id }})</td>
+                        <td>
+                            <!-- Link to view/send messages -->
+                            <a href="{{ url_for('tickets.send_message', ticket_id=ticket.id) }}">View/Send Message</a>
+                            {% if ticket.status == "Resolved" %}
+                            <form method="post" action="{{ url_for('tickets.archive_ticket', ticket_id=ticket.id) }}" style="display:inline;">
+                                <button type="submit">Archive</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button type="submit">Update Tickets</button>
+        </form>
+
+        <a href="{{ url_for('auth.logout') }}" class="logout-link">Logout</a>
+        <a href="{{ url_for('tickets.archived_tickets') }}">View Archived Tickets</a>
+    </div>
+</body>
+</html>
